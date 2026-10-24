@@ -59,25 +59,25 @@ enum Band {
 
     var name: String {
         switch self {
-        case .low: return "低风险"
-        case .mid: return "中等风险"
-        case .high: return "高风险"
+        case .low: return Lang.shared.t("低风险", "Low risk")
+        case .mid: return Lang.shared.t("中等风险", "Medium")
+        case .high: return Lang.shared.t("高风险", "High risk")
         }
     }
 
     var verdict: String {
         switch self {
-        case .low: return "环境看起来足够中性"
-        case .mid: return "有若干弱信号，还能继续收紧"
-        case .high: return "很像中国大陆的日常环境"
+        case .low: return Lang.shared.t("环境看起来足够中性", "Environment looks neutral enough")
+        case .mid: return Lang.shared.t("有若干弱信号，还能继续收紧", "A few weak signals — tighten further")
+        case .high: return Lang.shared.t("很像中国大陆的日常环境", "Looks like a typical mainland-China environment")
         }
     }
 }
 
 // MARK: - 动态背景
 //
-// 窗口本身是透的（NSVisualEffectView 把桌面糊在身后），
-// 上面再压一层缓慢漂移的彩色光斑，玻璃卡片才有东西可以折射。
+//  窗口本身是透的（NSVisualEffectView 把桌面糊在身后），
+//  上面再压一层缓慢漂移的彩色光斑，玻璃卡片才有东西可以折射。
 
 struct LiquidBackground: View {
     var body: some View {
@@ -110,7 +110,7 @@ struct LiquidBackground: View {
         let c = Color(hex: hex)
         return Circle()
             .fill(RadialGradient(colors: [c.opacity(alpha), c.opacity(0)],
-                                center: .center, startRadius: 0, endRadius: radius))
+                                 center: .center, startRadius: 0, endRadius: radius))
             .frame(width: radius * 2, height: radius * 2)
             .blur(radius: 26)
             .offset(x: x, y: y)
@@ -153,8 +153,8 @@ struct GlassSurface: ViewModifier {
                 RoundedRectangle(cornerRadius: radius)
                     .strokeBorder(
                         LinearGradient(colors: [.white.opacity(0.20), .white.opacity(0.02)],
-                                      startPoint: .topLeading,
-                                      endPoint: .bottomTrailing),
+                                       startPoint: .topLeading,
+                                       endPoint: .bottomTrailing),
                         lineWidth: 0.75)
                     .allowsHitTesting(false)
             }
