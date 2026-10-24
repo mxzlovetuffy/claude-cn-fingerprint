@@ -5,6 +5,9 @@
 
 import SwiftUI
 
+
+
+
 // MARK: - 主按钮样式
 
 struct AccentButtonStyle: ButtonStyle {
@@ -23,7 +26,7 @@ struct AccentButtonStyle: ButtonStyle {
                 Capsule().strokeBorder(
                     LinearGradient(colors: [.white.opacity(0.55), .white.opacity(0.08)],
                                    startPoint: .top, endPoint: .bottom),
-                                   lineWidth: 0.9)
+                    lineWidth: 0.9)
             )
             .shadow(color: Color(hex: 0xE2895F).opacity(0.38), radius: 12, y: 5)
             .scaleEffect(configuration.isPressed ? 0.975 : 1)
@@ -39,15 +42,16 @@ enum Tab: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .scan: return "检测"
-        case .why:  return "原理"
-        case .fix:  return "降分"
+        case .scan: return Lang.shared.t("检测", "Scan")
+        case .why:  return Lang.shared.t("原理", "Mechanism")
+        case .fix:  return Lang.shared.t("降分", "Mitigation")
         }
     }
 }
 
 struct RootView: View {
     @StateObject private var model = DetectorModel()
+    @StateObject private var lang = Lang.shared
     @State private var tab: Tab
 
     init() {
@@ -100,10 +104,10 @@ struct TopBar: View {
             LogoMark()
 
             VStack(alignment: .leading, spacing: 1) {
-                Text("Claude 中国用户检测器")
+                Text(Lang.shared.t("Claude 中国用户检测器", "Claude CN Fingerprint Detector"))
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Ink.text)
-                Text("十项区域与网络指纹 · 本地计算")
+                Text(Lang.shared.t("十项区域与网络指纹 · 本地计算", "Ten region/network fingerprints · local compute"))
                     .font(.system(size: 10))
                     .foregroundStyle(Ink.ghost)
             }
@@ -115,6 +119,16 @@ struct TopBar: View {
             Spacer(minLength: 16)
 
             Button {
+                Lang.shared.toggle()
+            } label: {
+                Text(Lang.shared.isZh ? "EN" : "中")
+                    .font(.system(size: 11, weight: .semibold))
+                    .frame(width: 30, height: 22)
+            }
+            .buttonStyle(.glass)
+            .help(Lang.shared.t("切换为 English", "Switch to 中文"))
+
+            Button {
                 model.copyReport()
             } label: {
                 Image(systemName: "doc.on.doc")
@@ -122,7 +136,7 @@ struct TopBar: View {
                     .frame(width: 26, height: 22)
             }
             .buttonStyle(.glass)
-            .help("复制本地报告")
+            .help(Lang.shared.t("复制本地报告", "Copy local report"))
             .disabled(!model.hasRun)
 
             Button {
@@ -135,7 +149,9 @@ struct TopBar: View {
                         Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")
                             .font(.system(size: 11, weight: .medium))
                     }
-                    Text(model.isScanning ? "检测中" : (model.hasRun ? "重新检测" : "开始检测"))
+                    Text(model.isScanning
+                         ? Lang.shared.t("检测中", "Scanning")
+                         : (model.hasRun ? Lang.shared.t("重新检测", "Rescan") : Lang.shared.t("开始检测", "Start scan")))
                         .font(.system(size: 11.5, weight: .medium))
                 }
             }
@@ -224,6 +240,7 @@ struct ScanView: View {
     }
 }
 
+
 // MARK: - 实时 prompt 预览
 //
 // 就是 Claude 每次请求都会看到的那一行。日期和时间都取本机当前值，
@@ -261,7 +278,7 @@ struct PromptPreview: View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 6) {
-                    Text("PROMPT · 实时")
+                    Text(Lang.shared.t("PROMPT · 实时", "PROMPT · LIVE"))
                         .font(.system(size: 7.5, weight: .semibold, design: .monospaced))
                         .tracking(1.3)
                         .foregroundStyle(Ink.ghost)
@@ -297,8 +314,8 @@ struct PromptPreview: View {
 
     private func mark(_ text: String) -> Text {
         Text(text)
-            .foregroundColor(Ink.amber)
-            .underline(true, color: Ink.amber.opacity(0.55))
+            .foregroundColor(Ink.warm)
+            .underline(true, color: Ink.warm.opacity(0.55))
     }
 }
 
@@ -311,7 +328,9 @@ struct ScorePanel: View {
         VStack(spacing: 0) {
             ScoreRing(model: model, size: 248)
 
-            Text(model.hasRun ? model.band.verdict : (model.score > 0 ? "正在逐项确认…" : "十项指纹，加权一分不差"))
+            Text(model.hasRun ? model.band.verdict : (model.score > 0
+                 ? Lang.shared.t("正在逐项确认…", "Checking each item…")
+                 : Lang.shared.t("十项指纹，加权一分不差", "Ten fingerprints, weighted precisely")))
                 .font(.system(size: 11.5))
                 .foregroundStyle(Ink.soft)
                 .padding(.top, 12)
@@ -319,7 +338,8 @@ struct ScorePanel: View {
             PromptPreview(model: model)
                 .padding(.top, 12)
 
-            Text("撇号与连字符是隐写位，每次请求都会带上这一行")
+            Text(Lang.shared.t("撇号与连字符是隐写位，每次请求都会带上这一行",
+                               "Apostrophes and hyphens carry the steganography bits; sent on every request"))
                 .font(.system(size: 8.5))
                 .foregroundStyle(Ink.ghost)
                 .padding(.top, 5)
@@ -330,10 +350,11 @@ struct ScorePanel: View {
                 HStack(spacing: 7) {
                     if model.isScanning {
                         ProgressView().controlSize(.small).scaleEffect(0.75)
-                    } else {
-                        Text(model.hasRun ? "重新检测" : "开始检测")
-                            .font(.system(size: 12, weight: .medium))
                     }
+                    Text(model.isScanning
+                         ? Lang.shared.t("正在读取本机指纹…", "Reading local fingerprints…")
+                         : (model.hasRun ? Lang.shared.t("重新检测", "Rescan") : Lang.shared.t("开始检测", "Start scan")))
+                        .font(.system(size: 12, weight: .medium))
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 7)
@@ -347,7 +368,7 @@ struct ScorePanel: View {
 
             HStack(spacing: 5) {
                 Image(systemName: "lock.fill").font(.system(size: 8))
-                Text("数据不出本机")
+                Text(Lang.shared.t("数据不出本机", "Data never leaves this Mac"))
             }
             .font(.system(size: 9.5))
             .foregroundStyle(Ink.ghost)
@@ -412,7 +433,7 @@ struct ScoreRing: View {
                 .foregroundStyle(Ink.ghost)
 
             HStack(alignment: .firstTextBaseline, spacing: 3) {
-                Text("\(Int(model.score.rounded()))")
+                Text("\\(Int(model.score.rounded()))")
                     .font(.system(size: 58, weight: .semibold, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(Ink.text)
@@ -423,7 +444,7 @@ struct ScoreRing: View {
             }
             .padding(.top, -4)
 
-            Text(model.score > 0 ? model.band.name : "等待检测")
+            Text(model.score > 0 ? model.band.name : Lang.shared.t("等待检测", "Waiting"))
                 .font(.system(size: 10.5, weight: .medium))
                 .foregroundStyle(model.hasRun ? model.band.color : Ink.faint)
                 .padding(.horizontal, 10)
@@ -432,7 +453,7 @@ struct ScoreRing: View {
                 .overlay(Capsule().strokeBorder((model.hasRun ? model.band.color : Color.white).opacity(0.22),
                                                 lineWidth: 0.6))
 
-            Text("命中 \(model.hits) / \(model.signals.count)")
+            Text(Lang.shared.t("命中 \\(model.hits) / \\(model.signals.count)", "Hits \\(model.hits) / \\(model.signals.count)"))
                 .font(.system(size: 9.5, design: .monospaced))
                 .foregroundStyle(Ink.ghost)
                 .padding(.top, 4)
@@ -471,11 +492,11 @@ struct ScoreScale: View {
             .frame(height: 8)
 
             HStack {
-                Text("低 0–30")
+                Text(Lang.shared.t("低 0–30", "Low 0–30"))
                 Spacer()
-                Text("中 31–60")
+                Text(Lang.shared.t("中 31–60", "Mid 31–60"))
                 Spacer()
-                Text("高 61–100")
+                Text(Lang.shared.t("高 61–100", "High 61–100"))
             }
             .font(.system(size: 8.5, design: .monospaced))
             .foregroundStyle(Ink.faint.opacity(0.8))
@@ -509,17 +530,17 @@ struct ContributionCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack {
-                Text("主要贡献")
+                Text(Lang.shared.t("主要贡献", "Top contributions"))
                     .font(.system(size: 11.5, weight: .semibold))
                     .foregroundStyle(Ink.text)
                 Spacer()
-                Text("权重 × 命中")
+                Text(Lang.shared.t("权重 × 命中", "Weight × hit"))
                     .font(.system(size: 8.5, design: .monospaced))
                     .foregroundStyle(Ink.ghost)
             }
 
             if top.isEmpty {
-                Text("还没有数据，先跑一次检测。")
+                Text(Lang.shared.t("还没有数据，先跑一次检测。", "No data yet — run a scan first."))
                     .font(.system(size: 10.5))
                     .foregroundStyle(Ink.faint)
                     .padding(.vertical, 6)
@@ -533,10 +554,10 @@ struct ContributionCard: View {
 
             Toggle(isOn: $model.allowPublicProbe) {
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("公网出口探测")
+                    Text(Lang.shared.t("公网出口探测", "Public egress probe"))
                         .font(.system(size: 10.5))
                         .foregroundStyle(Ink.soft)
-                    Text("会访问一次 ipapi.co")
+                    Text(Lang.shared.t("会访问一次 ipapi.co", "Calls ipapi.co once"))
                         .font(.system(size: 8.5))
                         .foregroundStyle(Ink.ghost)
                 }
@@ -552,7 +573,7 @@ struct ContributionCard: View {
     private func row(_ signal: Signal, _ result: SignalResult) -> some View {
         VStack(spacing: 4) {
             HStack {
-                Text(signal.name)
+                Text(signal.nameLocal)
                     .font(.system(size: 10.5))
                     .foregroundStyle(Ink.soft)
                 Spacer()
@@ -588,18 +609,19 @@ struct SignalBoard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("检测哪些信号")
+                    Text(Lang.shared.t("检测哪些信号", "Signals measured"))
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(Ink.text)
-                    Text("十项区域与网络指纹，加权得出 0–100 风险分")
+                    Text(Lang.shared.t("十项区域与网络指纹，加权得出 0–100 风险分",
+                                       "Ten fingerprints weighted into a 0–100 risk score"))
                         .font(.system(size: 10.5))
                         .foregroundStyle(Ink.faint)
                 }
-                Spacer(minLength: 12)
+                Spacer()
                 if model.isScanning {
                     ScanDots()
                 }
-                Text("10 项 · 权重 100")
+                Text(Lang.shared.t("10 项 · 权重 100", "10 signals · weight 100"))
                     .font(.system(size: 9, design: .monospaced))
                     .foregroundStyle(Ink.ghost)
             }
@@ -615,7 +637,8 @@ struct SignalBoard: View {
                 .padding(.bottom, 2)
             }
 
-            Text("命中阈值 0.25 · 分档 低 0–30 / 中 31–60 / 高 61–100")
+            Text(Lang.shared.t("命中阈值 0.25 · 分档 低 0–30 / 中 31–60 / 高 61–100",
+                               "Hit threshold 0.25 · Low 0–30 / Mid 31–60 / High 61–100"))
                 .font(.system(size: 8.5, design: .monospaced))
                 .foregroundStyle(Ink.ghost)
         }
@@ -627,7 +650,7 @@ struct ScanDots: View {
 
     var body: some View {
         HStack(spacing: 3) {
-            ForEach(0..<3, id: \.self) { index in
+            ForEach(0..<3, id: \\.self) { index in
                 Circle()
                     .fill(Ink.cyan)
                     .frame(width: 3.5, height: 3.5)
@@ -654,17 +677,17 @@ struct SignalCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(signal.name)
+                Text(signal.nameLocal)
                     .font(.system(size: 12.5, weight: .semibold))
                     .foregroundStyle(Ink.text)
 
-                if let note = signal.note {
-                    Pill(text: note, color: note == "强信号" ? Ink.hot : Ink.claude)
+                if let note = signal.noteLocal {
+                    Pill(text: note, color: signal.id == "vendorFonts" ? Ink.hot : Ink.claude)
                 }
 
                 Spacer(minLength: 6)
 
-                Text("\(signal.weight)")
+                Text("\\(signal.weight)")
                     .font(.system(size: 12, weight: .semibold, design: .monospaced))
                     .foregroundStyle(isHit ? Ink.warm : Ink.soft)
                     .contentTransition(.numericText())
@@ -720,7 +743,7 @@ struct SignalCard: View {
     }
 
     private var evidenceText: String {
-        guard let result, revealed else { return "等待探测…" }
+        guard let result, revealed else { return Lang.shared.t("等待探测…", "Waiting…") }
         return result.evidence
     }
 }
@@ -730,11 +753,11 @@ struct StatusPill: View {
     let revealed: Bool
 
     private var label: String {
-        guard revealed else { return "待检测" }
-        if ratio >= 0.7 { return "强命中" }
-        if ratio >= DetectorModel.hitThreshold { return "弱命中" }
-        if ratio > 0 { return "边缘" }
-        return "未命中"
+        guard revealed else { return Lang.shared.t("待检测", "Waiting") }
+        if ratio >= 0.7 { return Lang.shared.t("强命中", "Strong") }
+        if ratio >= DetectorModel.hitThreshold { return Lang.shared.t("弱命中", "Weak") }
+        if ratio > 0 { return Lang.shared.t("边缘", "Edge") }
+        return Lang.shared.t("未命中", "Miss")
     }
 
     private var color: Color {
@@ -765,18 +788,27 @@ struct WhyView: View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: 18) {
                 PageHeader(kicker: "MECHANISM",
-                           title: "检测原理",
-                           subtitle: "它读的，和你浏览器此刻愿意暴露的东西是同一批。")
+                           title: Lang.shared.t("检测原理", "How it works"),
+                           subtitle: Lang.shared.t("它读的，和你浏览器此刻愿意暴露的东西是同一批。",
+                                                   "It reads the same things your browser exposes today."))
 
                 HStack(alignment: .top, spacing: 16) {
                     VStack(alignment: .leading, spacing: 12) {
-                        Prose("""
-                        当 Claude Code 通过 ANTHROPIC_BASE_URL 指向中转端点时，据公开逆向分析，它会读取操作系统时区与中转 hostname，再把结果用 Unicode 隐写术藏进 system prompt：「Today’s date」那一行的日期分隔符和 4 种几乎一样的撇号变体，编码了你是否像中国用户。
-                        """)
+                        Prose(Lang.shared.t(
+                            """
+                            当 Claude Code 通过 ANTHROPIC_BASE_URL 指向中转端点时，据公开逆向分析，它会读取操作系统时区与中转 hostname，再把结果用 Unicode 隐写术藏进 system prompt：「Today’s date」那一行的日期分隔符和 4 种几乎一样的撇号变体，编码了你是否像中国用户。
+                            """,
+                            """
+                            When Claude Code points ANTHROPIC_BASE_URL at a relay, public reverse-engineering writes say it reads the OS timezone and relay hostname, then hides the verdict in the system prompt with Unicode steganography: the date separator and four look-alike apostrophe variants on the "Today's date" line encode whether you look like a China user.
+                            """))
 
-                        Prose("""
-                        网页读不到 Claude Code 能读的全部信息，但关键信号完全一致：本工具在系统层面读取同一个时区，再叠加语言、字体、网络出口、国产 App、机型、区域与偏移九项指纹，加权得分。得分 ≥ 0.25 计为命中；分档：低 0–30、中 31–60、高 61–100。
-                        """)
+                        Prose(Lang.shared.t(
+                            """
+                            网页读不到 Claude Code 能读的全部信息，但关键信号完全一致：本工具在系统层面读取同一个时区，再叠加语言、字体、网络出口、国产 App、机型、区域与偏移九项指纹，加权得分。得分 ≥ 0.25 计为命中；分档：低 0–30、中 31–60、高 61–100。
+                            """,
+                            """
+                            A web page cannot read everything Claude Code can, but the key signals overlap. This tool reads the same timezone at the OS level and adds nine more local fingerprints (language, fonts, egress, CN apps, device, locale, offset), weighted into a score. Per-item ratio ≥ 0.25 counts as a hit; bands: Low 0–30, Mid 31–60, High 61–100.
+                            """))
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -785,21 +817,33 @@ struct WhyView: View {
                 }
 
                 PageHeader(kicker: "WHY",
-                           title: "为什么会被判为「中国用户」",
+                           title: Lang.shared.t("为什么会被判为「中国用户」", "Why flagged as a China user"),
                            subtitle: nil,
                            compact: true)
 
                 HStack(alignment: .top, spacing: 16) {
                     VStack(alignment: .leading, spacing: 12) {
-                        Prose("""
-                        Anthropic 并不在中国大陆销售 Claude，而 Claude Code 被曝会把「看起来像中国」的流量视为更高风险。这个判定并不是一个开关，而是把多个弱信号叠加成一个概率。系统时区是单项里最重的一环 —— 它伴随每一次请求，又很难被无意伪装；但语言、字体、设备品牌与网络都会在它之上继续加权。
-                        """)
-                        Prose("""
-                        整个环境之所以会泄露这么多，是因为区域设置会渗透到方方面面：系统时区决定了 Intl 与 Date，语言偏好决定了请求头里的 Accept-Language，而系统自带的字体可以被逐个枚举。如果再让 Claude Code 走一层中转，中转的 hostname 本身又成了一个信号。
-                        """)
-                        Prose("""
-                        这些信号单看没有一个是决定性的，而这恰恰是风险会累积的原因：一个美国时区，配上一整套中文字体和一个微信 WebView，照样会被读成可疑。
-                        """)
+                        Prose(Lang.shared.t(
+                            """
+                            Anthropic 并不在中国大陆销售 Claude，而 Claude Code 被曝会把「看起来像中国」的流量视为更高风险。这个判定并不是一个开关，而是把多个弱信号叠加成一个概率。系统时区是单项里最重的一环 —— 它伴随每一次请求，又很难被无意伪装；但语言、字体、设备品牌与网络都会在它之上继续加权。
+                            """,
+                            """
+                            Anthropic does not sell Claude in mainland China, and reports describe Claude Code treating traffic that "looks Chinese" as higher risk. The verdict is not a switch but a probability stacked from weak signals. System timezone weighs heaviest — it travels with every request and is hard to disguise by accident — but language, fonts, device brand and network add further weight on top.
+                            """))
+                        Prose(Lang.shared.t(
+                            """
+                            整个环境之所以会泄露这么多，是因为区域设置会渗透到方方面面：系统时区决定了 Intl 与 Date，语言偏好决定了请求头里的 Accept-Language，而系统自带的字体可以被逐个枚举。如果再让 Claude Code 走一层中转，中转的 hostname 本身又成了一个信号。
+                            """,
+                            """
+                            The environment leaks so much because regional settings permeate everywhere: timezone drives Intl and Date, language preference sets the Accept-Language header, and bundled fonts can be enumerated one by one. Add a relay and its hostname becomes a signal too.
+                            """))
+                        Prose(Lang.shared.t(
+                            """
+                            这些信号单看没有一个是决定性的，而这恰恰是风险会累积的原因：一个美国时区，配上一整套中文字体和一个微信 WebView，照样会被读成可疑。
+                            """,
+                            """
+                            None of these signals alone is decisive — which is exactly why risk accumulates: a US timezone plus a full set of CJK fonts and a WeChat WebView still reads as suspicious.
+                            """))
                     }
 
                     WeightTable()
@@ -864,7 +908,7 @@ struct SnippetCard: View {
                 Circle().fill(Ink.warm.opacity(0.65)).frame(width: 7, height: 7)
                 Circle().fill(Ink.mint.opacity(0.6)).frame(width: 7, height: 7)
                 Spacer()
-                Text("SYSTEM PROMPT · 片段")
+                Text(Lang.shared.t("SYSTEM PROMPT · 片段", "SYSTEM PROMPT · excerpt"))
                     .font(.system(size: 7.5, weight: .medium, design: .monospaced))
                     .tracking(1.2)
                     .foregroundStyle(Ink.ghost)
@@ -881,13 +925,14 @@ struct SnippetCard: View {
                 .foregroundStyle(Ink.text)
 
             VStack(spacing: 5) {
-                glyphRow("’", "U+2019", "撇号变体")
-                glyphRow("ʹ", "U+02B9", "修饰撇号")
-                glyphRow("ʼ", "U+02BC", "送气符号")
-                glyphRow("‑", "U+2011", "不换行连字符")
+                glyphRow("’", "U+2019", Lang.shared.t("撇号变体", "Apostrophe variant"))
+                glyphRow("ʹ", "U+02B9", Lang.shared.t("修饰撇号", "Modifier prime"))
+                glyphRow("ʼ", "U+02BC", Lang.shared.t("送气符号", "Aspirate mark"))
+                glyphRow("‑", "U+2011", Lang.shared.t("不换行连字符", "Non-breaking hyphen"))
             }
 
-            Text("四个几乎一样的撇号 × 两种连字符，肉眼分辨不出差别，却足以编出几个 bit。")
+            Text(Lang.shared.t("四个几乎一样的撇号 × 两种连字符，肉眼分辨不出差别，却足以编出几个 bit。",
+                               "Four look-alike apostrophes × two hyphens are invisible to the eye but encode a few bits."))
                 .font(.system(size: 9.5))
                 .foregroundStyle(Ink.faint)
                 .lineSpacing(3)
@@ -921,13 +966,13 @@ struct SnippetCard: View {
 struct WeightTable: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("权重表")
+            Text(Lang.shared.t("权重表", "Weights"))
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(Ink.text)
 
             ForEach(Signal.all) { signal in
                 HStack(spacing: 8) {
-                    Text(signal.name)
+                    Text(signal.nameLocal)
                         .font(.system(size: 9.5))
                         .foregroundStyle(Ink.soft)
                         .lineLimit(1)
@@ -944,7 +989,7 @@ struct WeightTable: View {
                     }
                     .frame(height: 3)
 
-                    Text("\(signal.weight)")
+                    Text("\\(signal.weight)")
                         .font(.system(size: 9, design: .monospaced))
                         .foregroundStyle(Ink.faint)
                         .frame(width: 18, alignment: .trailing)
@@ -961,37 +1006,43 @@ struct WeightTable: View {
 struct FixView: View {
     private struct Step: Identifiable {
         let id = UUID()
-        let title: String
-        let body: String
-        let weight: String
+        let title: (zh: String, en: String)
+        let body: (zh: String, en: String)
+        let weight: (zh: String, en: String)
     }
 
     private let steps: [Step] = [
-        Step(title: "把系统时区改成非中国时区",
-             body: "例如 America/New_York 或 Europe/London，并确认偏移不再是 UTC+8。逆向分析披露 Claude Code 直接读取的信号只有这一项，所以它在本页评分中权重最高。",
-             weight: "时区 · 24"),
-        Step(title: "把 zh-Hans / zh-CN 从语言列表首位移除",
-             body: "让首选语言以英文或其他非中文 locale 打头。注意是「首位」—— 中文留在列表末尾仍然是弱信号，但不再是强信号。",
-             weight: "语言 · 18"),
-        Step(title: "隔离中文与厂商字体",
-             body: "苹方、微软雅黑、MiSans、鸿蒙黑体 —— 换一台干净的机器或用一个独立的用户账户，让字体枚举找不到任何明显的中文痕迹。",
-             weight: "字体 · 24"),
-        Step(title: "处理网络出口",
-             body: "走原生住宅 IP 而非数据中心 IP，避免真实网络与地理位置盖过一个本来已经很干净的环境。",
-             weight: "网络 · 10"),
-        Step(title: "保持 ANTHROPIC_BASE_URL 的 hostname 中性",
-             body: "避开含敏感关键词或 AI 实验室名称的域名；若宿主机在中国，还需覆盖 TZ 环境变量。",
-             weight: "中转 · —")
+        Step(title: ("把系统时区改成非中国时区", "Set a non-China system timezone"),
+             body: ("例如 America/New_York 或 Europe/London，并确认偏移不再是 UTC+8。逆向分析披露 Claude Code 直接读取的信号只有这一项，所以它在本页评分中权重最高。",
+                    "e.g. America/New_York or Europe/London, and confirm the offset is no longer UTC+8. Reverse-engineering writes say this is the only signal Claude Code reads directly, so it weighs most here."),
+             weight: ("时区 · 24", "TZ · 24")),
+        Step(title: ("把 zh-Hans / zh-CN 从语言列表首位移除", "Move zh-Hans / zh-CN off the top of the language list"),
+             body: ("让首选语言以英文或其他非中文 locale 打头。注意是「首位」—— 中文留在列表末尾仍然是弱信号，但不再是强信号。",
+                    "Lead with English or another non-Chinese locale. It's the *first* entry that matters; Chinese at the tail stays a weak signal, no longer a strong one."),
+             weight: ("语言 · 18", "Lang · 18")),
+        Step(title: ("隔离中文与厂商字体", "Isolate CJK and vendor fonts"),
+             body: ("苹方、微软雅黑、MiSans、鸿蒙黑体 —— 换一台干净的机器或用一个独立的用户账户，让字体枚举找不到任何明显的中文痕迹。",
+                    "PingFang, Microsoft YaHei, MiSans, HarmonyOS Sans — use a clean machine or a separate user account so font enumeration finds no obvious CJK trace."),
+             weight: ("字体 · 24", "Fonts · 24")),
+        Step(title: ("处理网络出口", "Sort out your network egress"),
+             body: ("走原生住宅 IP 而非数据中心 IP，避免真实网络与地理位置盖过一个本来已经很干净的环境。",
+                    "Use a residential IP rather than a datacenter IP, so the real network and location do not override an otherwise clean environment."),
+             weight: ("网络 · 10", "Net · 10")),
+        Step(title: ("保持 ANTHROPIC_BASE_URL 的 hostname 中性", "Keep the ANTHROPIC_BASE_URL hostname neutral"),
+             body: ("避开含敏感关键词或 AI 实验室名称的域名；若宿主机在中国，还需覆盖 TZ 环境变量。",
+                    "Avoid domains with sensitive keywords or AI-lab names; if the host is in China, also override the TZ environment variable."),
+             weight: ("中转 · —", "Relay · —"))
     ]
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: 14) {
                 PageHeader(kicker: "MITIGATION",
-                           title: "如何降低你的风险分",
-                           subtitle: "从上往下做 —— 时区和语言的权重最高。")
+                           title: Lang.shared.t("如何降低你的风险分", "How to lower your score"),
+                           subtitle: Lang.shared.t("从上往下做 —— 时区和语言的权重最高。",
+                                                   "Work top-down — timezone and language weigh most."))
 
-                ForEach(Array(steps.enumerated()), id: \.element.id) { index, step in
+                ForEach(Array(steps.enumerated()), id: \\.element.id) { index, step in
                     HStack(alignment: .top, spacing: 14) {
                         Text(String(format: "%02d", index + 1))
                             .font(.system(size: 15, weight: .medium, design: .monospaced))
@@ -1000,10 +1051,10 @@ struct FixView: View {
                             .padding(.top, 1)
 
                         VStack(alignment: .leading, spacing: 3) {
-                            Text(step.title)
+                            Text(Lang.shared.isZh ? step.title.zh : step.title.en)
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundStyle(Ink.text)
-                            Text(step.body)
+                            Text(Lang.shared.isZh ? step.body.zh : step.body.en)
                                 .font(.system(size: 10.8))
                                 .lineSpacing(3.5)
                                 .foregroundStyle(Color.white.opacity(0.76))
@@ -1012,7 +1063,7 @@ struct FixView: View {
 
                         Spacer(minLength: 12)
 
-                        Text(step.weight)
+                        Text(Lang.shared.isZh ? step.weight.zh : step.weight.en)
                             .font(.system(size: 8.5, design: .monospaced))
                             .foregroundStyle(Ink.faint)
                             .padding(.horizontal, 7)
@@ -1025,7 +1076,8 @@ struct FixView: View {
                     .glassSurface(radius: 16, tint: .black.opacity(0.16))
                 }
 
-                Text("本页仅用于隐私自检与指纹教育，结论不保证与 Anthropic 的实际风控模型一致。所有检测都在本机完成，唯一的对外请求是可选开启的公网 IP 查询。")
+                Text(Lang.shared.t("本页仅用于隐私自检与指纹教育，结论不保证与 Anthropic 的实际风控模型一致。所有检测都在本机完成，唯一的对外请求是可选开启的公网 IP 查询。",
+                                   "This page is for privacy self-check and fingerprint education only; the result does not match Anthropic's actual risk model. Every check runs locally; the only outbound call is the optional public IP lookup."))
                     .font(.system(size: 9.5))
                     .foregroundStyle(Ink.ghost)
                     .lineSpacing(3)
@@ -1040,12 +1092,13 @@ struct FixView: View {
 // MARK: - Toast
 
 struct ToastView: View {
-    let text: String
+    var text: String
 
     var body: some View {
         VStack {
             Spacer()
             Text(text)
+                .font(.system(size: 11.5))
                 .foregroundStyle(Ink.text)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 9)
