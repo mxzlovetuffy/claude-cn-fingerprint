@@ -7,6 +7,12 @@ A native macOS utility that scores ten region / network fingerprints into a
 0–100 risk number, so you can see exactly what your machine exposes.
 **Every check runs locally on your machine.**
 
+![检测页 Scan](screenshots/01-scan.png)
+
+![原理 Mechanism](screenshots/02-mechanism.png)
+
+![降分 Mitigation](screenshots/03-mitigation.png)
+
 ---
 
 ## 中文说明
