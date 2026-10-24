@@ -1,0 +1,19 @@
+# Build output
+build/
+*.o
+*.swiftmodule
+
+# macOS metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+
+# Misc
+*.log
+*.tmp
