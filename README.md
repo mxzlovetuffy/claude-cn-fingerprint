@@ -7,8 +7,6 @@ A native macOS utility that scores ten region / network fingerprints into a
 0–100 risk number, so you can see exactly what your machine exposes.
 **Every check runs locally on your machine.**
 
-![检测页 Screenshot](screenshots/01-scan.png)
-
 ---
 
 ## 中文说明
@@ -107,15 +105,9 @@ xattr -dr com.apple.quarantine "Claude 中国用户检测器.app"
 > 如果提示「无法验证开发者」，说明隔离属性还在，重新执行方式二即可。
 > 把 App 拖进 `/Applications` 前先放行，避免启动台再次拦截。
 
-### 直接运行 / 构建
+### 构建
 
-预编译包在 `dist/` 目录：
-
-```bash
-open "dist/Claude 中国用户检测器.app"
-```
-
-自行构建需要 Xcode（CommandLineTools 的 SDK 版本对不上，会报
+仓库只含源码，自行构建需要 Xcode（CommandLineTools 的 SDK 版本对不上，会报
 `this SDK is not supported by the compiler`）：
 
 ```bash
@@ -124,7 +116,7 @@ open "dist/Claude 中国用户检测器.app"
 XCODE=/path/to/Xcode.app/Contents/Developer ./build.sh
 ```
 
-要求 macOS 26 或更高（Liquid Glass 从 26 开始提供）。
+构建产物为 `dist/Claude 中国用户检测器.app`。要求 macOS 26 或更高（Liquid Glass 从 26 开始提供）。
 
 ```
 Sources/
@@ -231,14 +223,15 @@ re-run Option 2.
 
 ### Build
 
-Prebuilt bundle: `dist/Claude 中国用户检测器.app`. From source you need Xcode
-(Command Line Tools SDK is too old):
+This repository contains source only. From source you need Xcode (Command Line
+Tools SDK is too old):
 
 ```bash
 ./build.sh
 ```
 
-Requires macOS 26+ (Liquid Glass).
+The script produces `dist/Claude 中国用户检测器.app`. Requires macOS 26+
+(Liquid Glass).
 
 ---
 
