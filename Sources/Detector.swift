@@ -92,8 +92,10 @@ enum Probes {
         switch kind {
         case .timezone:      return timezone()
         case .language:      return language()
-        case .cjkFonts:      return fontProbe(Self.cjkFamilies, strongAt: 3, label: "中文字体")
-        case .vendorFonts:   return fontProbe(Self.vendorFamilies, strongAt: 2, label: "厂商字体")
+        case .cjkFonts:      return fontProbe(Self.cjkFamilies, strongAt: 3,
+                                             label: ("中文字体", "CJK fonts"))
+        case .vendorFonts:   return fontProbe(Self.vendorFamilies, strongAt: 2,
+                                             label: ("厂商字体", "vendor fonts"))
         case .network:       return await network(allowNetwork: allowNetwork)
         case .browserApps:   return browserApps()
         case .device:        return device()
@@ -129,7 +131,7 @@ enum Probes {
         return SignalResult(
             ratio: ratio,
             evidence: "\(id) · \(utc)",
-            note: ratio >= 1 ? "和 Claude Code 读到的是同一个值" : ""
+            note: ratio >= 1 ? Lang.shared.t("和 Claude Code 读到的是同一个值", "Same value Claude Code reads") : ""
         )
     }
 
@@ -150,8 +152,9 @@ enum Probes {
         let shown = languages.prefix(4).joined(separator: ", ")
         return SignalResult(
             ratio: ratio,
-            evidence: shown.isEmpty ? "读取失败" : shown,
-            note: ratio >= 1 ? "首选语言即简体中文" : (ratio > 0 ? "列表中含中文" : "")
+            evidence: shown.isEmpty ? Lang.shared.t("读取失败", "read failed") : shown,
+            note: ratio >= 1 ? Lang.shared.t("首选语言即简体中文", "Primary is Simplified Chinese")
+                  : (ratio > 0 ? Lang.shared.t("列表中含中文", "Chinese present in list") : "")
         )
     }
 
@@ -184,7 +187,8 @@ enum Probes {
         "FZShuSong-Z01", "方正书宋", "HYQiHei", "汉仪旗黑"
     ]
 
-    static func fontProbe(_ families: [String], strongAt: Int, label: String) -> SignalResult {
+    static func fontProbe(_ families: [String], strongAt: Int,
+                          label: (zh: String, en: String)) -> SignalResult {
         let hit = families.filter { installedFamilies.contains($0.lowercased()) }
 
         let ratio: Double
@@ -195,11 +199,12 @@ enum Probes {
 
         let shown = hit.prefix(3).joined(separator: " · ")
         let suffix = hit.count > 3 ? " +\(hit.count - 3)" : ""
+        let labelText = Lang.shared.isZh ? label.zh : label.en
 
         return SignalResult(
             ratio: ratio,
-            evidence: hit.isEmpty ? "未发现\(label)" : shown + suffix,
-            note: hit.isEmpty ? "" : "\(hit.count) 个字族可渲染"
+            evidence: hit.isEmpty ? Lang.shared.t("未发现\(labelText)", "No \(labelText) found") : shown + suffix,
+            note: hit.isEmpty ? "" : Lang.shared.t("\(hit.count) 个字族可渲染", "\(hit.count) families available")
         )
     }
 
@@ -212,14 +217,16 @@ enum Probes {
 
         guard allowNetwork else {
             return SignalResult(ratio: 0.2,
-                                evidence: "本机 \(localText) · 未查询公网出口",
-                                note: "公网探测已关闭")
+                                evidence: Lang.shared.t("本机 \(localText) · 未查询公网出口",
+                                                        "Local \(localText) · egress skipped"),
+                                note: Lang.shared.t("公网探测已关闭", "Egress probe off"))
         }
 
         guard let egress = await fetchEgress() else {
             return SignalResult(ratio: 0.25,
-                                evidence: "本机 \(localText) · 公网探测超时",
-                                note: "只有本地地址可见")
+                                evidence: Lang.shared.t("本机 \(localText) · 公网探测超时",
+                                                        "Local \(localText) · egress timed out"),
+                                note: Lang.shared.t("只有本地地址可见", "Only local addresses visible"))
         }
 
         let isChina = egress.countryCode.uppercased() == "CN"
@@ -231,7 +238,8 @@ enum Probes {
         return SignalResult(
             ratio: isChina ? 1.0 : 0.4,
             evidence: evidence,
-            note: isChina ? "出口 IP 落在中国大陆" : "公网地址可读，但归属不在中国"
+            note: isChina ? Lang.shared.t("出口 IP 落在中国大陆", "Egress IP in mainland China")
+                          : Lang.shared.t("公网地址可读，但归属不在中国", "Egress readable, not in China")
         )
     }
 
@@ -347,8 +355,10 @@ enum Probes {
 
         return SignalResult(
             ratio: ratio,
-            evidence: all.isEmpty ? "未发现常见国产 App" : all.prefix(4).joined(separator: " · "),
-            note: all.isEmpty ? "" : "\(all.count) 个内嵌 WebKit 的宿主"
+            evidence: all.isEmpty ? Lang.shared.t("未发现常见国产 App", "No common CN apps found")
+                                  : all.prefix(4).joined(separator: " · "),
+            note: all.isEmpty ? "" : Lang.shared.t("\(all.count) 个内嵌 WebKit 的宿主",
+                                                   "\(all.count) WebKit hosts")
         )
     }
 
@@ -365,7 +375,8 @@ enum Probes {
         return SignalResult(
             ratio: hit == nil ? 0 : 0.9,
             evidence: "\(model) · \(machine)",
-            note: hit == nil ? "Apple 硬件，和国产厂商无关" : "命中 \(hit!)"
+            note: hit == nil ? Lang.shared.t("Apple 硬件，和国产厂商无关", "Apple hardware, no CN vendor")
+                             : Lang.shared.t("命中 \(hit!)", "Matched \(hit!)")
         )
     }
 
@@ -396,7 +407,7 @@ enum Probes {
         return SignalResult(
             ratio: ratio,
             evidence: "\(id) · region=\(region.isEmpty ? "—" : region) · calendar=\(calendar)",
-            note: ratio >= 1 ? "区域锁定为中国大陆" : ""
+            note: ratio >= 1 ? Lang.shared.t("区域锁定为中国大陆", "Region locked to mainland China") : ""
         )
     }
 
@@ -421,8 +432,9 @@ enum Probes {
 
         return SignalResult(
             ratio: ratio,
-            evidence: "现在 \(text(now)) · 1 月 \(text(jan)) · 7 月 \(text(jul))",
-            note: fixed ? "全年固定 UTC+8，没有夏令时" : ""
+            evidence: Lang.shared.t("现在 \(text(now)) · 1 月 \(text(jan)) · 7 月 \(text(jul))",
+                                    "Now \(text(now)) · Jan \(text(jan)) · Jul \(text(jul))"),
+            note: fixed ? Lang.shared.t("全年固定 UTC+8，没有夏令时", "Fixed UTC+8 year-round, no DST") : ""
         )
     }
 
@@ -435,8 +447,10 @@ enum Probes {
 
         return SignalResult(
             ratio: ratio,
-            evidence: hasAppleEmoji ? "Apple Color Emoji · macOS 字形栈" : "未找到 Apple Color Emoji",
-            note: "弱信号，只作参考"
+            evidence: hasAppleEmoji
+                ? "Apple Color Emoji · macOS"
+                : Lang.shared.t("未找到 Apple Color Emoji", "Apple Color Emoji not found"),
+            note: Lang.shared.t("弱信号，只作参考", "Weak signal, reference only")
         )
     }
 }
