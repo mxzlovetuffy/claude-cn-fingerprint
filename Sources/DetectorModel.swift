@@ -72,7 +72,8 @@ final class DetectorModel: ObservableObject {
 
         isScanning = false
         hasRun = true
-        showToast("检测完成 · \(band.name) \(Int(score.rounded())) 分")
+        showToast(Lang.shared.t("检测完成 · \(band.name) \(Int(score.rounded())) 分",
+                                "Done · \(band.name) \(Int(score.rounded())) pts"))
     }
 
     private func rawScore() -> Double {
@@ -87,31 +88,31 @@ final class DetectorModel: ObservableObject {
     // MARK: 报告
 
     func reportText() -> String {
+        let zh = Lang.shared.isZh
         let stamp = DateFormatter()
         stamp.dateFormat = "yyyy-MM-dd HH:mm"
         let hits = self.hits
 
         var lines: [String] = [
-            "Claude 中国用户检测器 · 本地报告",
-            "时间 \(stamp.string(from: Date()))",
-            "风险分 \(Int(score.rounded()))/100（\(band.name)）",
-            "命中 \(hits)/\(signals.count) 项 · 单项阈值 \(Self.hitThreshold)",
+            zh ? "Claude 中国用户检测器 · 本地报告" : "Claude CN Detector · Local Report",
+            zh ? "时间 \(stamp.string(from: Date()))" : "Time \(stamp.string(from: Date()))",
+            zh ? "风险分 \(Int(score.rounded()))/100（\(band.name)）"
+               : "Risk \(Int(score.rounded()))/100 (\(band.name))",
+            zh ? "命中 \(hits)/\(signals.count) 项 · 单项阈值 \(Self.hitThreshold)"
+               : "Met \(hits)/\(signals.count) · per-item threshold \(Self.hitThreshold)",
             String(repeating: "─", count: 34),
             ""
         ]
 
         for signal in signals {
-            let r = results[signal.id] ?? SignalResult(ratio: 0, evidence: "未检测")
+            let r = results[signal.id] ?? SignalResult(ratio: 0, evidence: zh ? "未检测" : "Not tested")
             let percent = String(format: "%3.0f%%", min(max(r.ratio, 0), 1) * 100)
-            lines.append(String(format: "%-10@ 权重 %2d  %@  %@",
-                                signal.name as NSString,
-                                signal.weight,
-                                percent,
-                                r.evidence))
+            let weightLabel = zh ? "权重" : "Weight"
+            lines.append("\(signal.nameLocal)  \(weightLabel) \(signal.weight)  \(percent)  \(r.evidence)")
         }
 
         lines.append("")
-        lines.append("在本机生成，未上传任何数据。")
+        lines.append(zh ? "在本机生成，未上传任何数据。" : "Generated locally; nothing uploaded.")
         return lines.joined(separator: "\n")
     }
 
@@ -120,7 +121,7 @@ final class DetectorModel: ObservableObject {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
-        showToast("报告已复制到剪贴板")
+        showToast(Lang.shared.t("报告已复制到剪贴板", "Report copied to clipboard"))
     }
 
     // MARK: Toast

@@ -19,7 +19,10 @@ mkdir -p build
   Sources/*.swift -o build/CNDetector
 
 echo "==> 组装 bundle"
-rm -rf "$APP"
+# 旧 bundle 可能被系统占位（rm 报 Resource deadlock），先删，失败则改名挪走
+if [ -e "$APP" ]; then
+  rm -rf "$APP" 2>/dev/null || mv "$APP" "/tmp/cnd_old_$$.app" 2>/dev/null || true
+fi
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp build/CNDetector "$APP/Contents/MacOS/CNDetector"
 printf 'APPL????' > "$APP/Contents/PkgInfo"

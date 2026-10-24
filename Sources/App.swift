@@ -65,7 +65,7 @@ struct WindowConfigurator: NSViewRepresentable {
             window.isOpaque = false
             window.backgroundColor = .clear
             window.appearance = NSAppearance(named: .darkAqua)
-            window.title = "Claude 中国用户检测器"
+            window.title = Lang.shared.t("Claude 中国用户检测器", "Claude CN Fingerprint Detector")
         }
         return view
     }
