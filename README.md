@@ -14,7 +14,9 @@ A native macOS utility that scores ten region / network fingerprints into a
 ![降分 Mitigation](screenshots/03-mitigation.png)
 
 ---
-
+## 关于隐私
+## 这个app的所有API来源均来自于Apple官方公开，数据仅会在本地处理不上云
+---
 ## 中文说明
 
 ### 这是什么
