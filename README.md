@@ -244,3 +244,9 @@ The script produces `dist/Claude 中国用户检测器.app`. Requires macOS 26+
 ## License
 
 For privacy education and self-checking only. Use at your own risk.
+
+---
+##真心感谢以下为本项目做出贡献的人
+<img width="358" height="119" alt="image" src="https://github.com/user-attachments/assets/7e9fc2e0-c683-4e86-b293-1b43f1dfe02b" />
+<img width="372" height="119" alt="image" src="https://github.com/user-attachments/assets/e24dde85-378f-408c-b604-bc24cd450da8" />
+项目部分代码由Claude code编辑，ai参与了审查与校对代码
